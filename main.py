@@ -33,7 +33,7 @@ def get_location(client_ip):
         print(f"ipinfo.io response: {response.json()}")
         if response.status_code == 200:
             location_data = response.json()
-            city = location_data.get("city", "Yola")
+            city = location_data.get("city", "Unknown")
             return city
         else:
             print("Failed to fetch location data")
