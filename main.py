@@ -1,11 +1,10 @@
 from fastapi import FastAPI, Request
 import requests
-import ipinfo
+import os
 
 app = FastAPI()
 
-WEATHER_API_KEY = "bc9756da9c4b44e9b89212131243006"
-
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 
 def get_temperature(city):
     try:
@@ -24,7 +23,6 @@ def get_temperature(city):
         print(f"An error occurred while fetching temperature: {e}")
         return None
 
-
 def get_location(client_ip):
     try:
         location_api_url = f"http://ipinfo.io/{client_ip}/json"
@@ -42,13 +40,15 @@ def get_location(client_ip):
         print(f"An error occurred while fetching location: {e}")
         return "Unknown"
 
-
 @app.get("/api/hello")
 async def hello(request: Request, visitor_name: str):
     client_ip = request.client.host
 
-    city = get_location(client_ip)
+    x_forwarded_for = request.headers.get("X-Forwarded-For")
+    if x_forwarded_for:
+        client_ip = x_forwarded_for.split(",")[0].strip()
 
+    city = get_location(client_ip)
     temperature = get_temperature(city)
     if temperature is None:
         temperature = "unknown"
@@ -56,5 +56,5 @@ async def hello(request: Request, visitor_name: str):
     return {
         "client_ip": client_ip,
         "location": city,
-        "greeting": f"Hello, {visitor_name}!, the temperature is {temperature} degrees Celsius in {city}"
+        "greeting": f"Hello, {visitor_name}! The temperature is {temperature} degrees Celsius in {city}."
     }
